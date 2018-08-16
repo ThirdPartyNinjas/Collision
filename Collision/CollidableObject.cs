@@ -45,9 +45,9 @@ namespace Collision
             float d0 = min0 - max1;
             float d1 = min1 - max0;
 
-            if (Math.Abs(d0) < 0.0001f)
+            if (Utility.ApproximatelyZero(d0))
                 d0 = 0;
-            if (Math.Abs(d1) < 0.0001f)
+            if (Utility.ApproximatelyZero(d1))
                 d1 = 0;
 
             if (d0 < 0 && d1 < 0)
@@ -57,7 +57,7 @@ namespace Collision
             }
 
             float v = Vector2.Dot(velocity, axis);
-            if (Math.Abs(v) < 0.0001f)
+            if (Utility.ApproximatelyZero(v))
             {
                 time = float.NegativeInfinity;
                 return false;
@@ -154,7 +154,7 @@ namespace Collision
                 axis = maxNegativeAxis;
             }
 
-            if (time < 0.0f && Vector2.Dot(object1.Position - object2.Position, axis) < 0.0f)
+            if (Vector2.Dot(object1.Position - object2.Position, axis) < 0.0f)
                 axis *= -1.0f;
 
             return true;
@@ -178,7 +178,7 @@ namespace Collision
                     vertex1 = i;
                     cct = CollisionComponentType.Vertex;
                 }
-                else if (Math.Abs(temp - max) < 0.0001f)
+                else if (Utility.ApproximatelyEqual(temp, max))
                 {
                     vertex2 = i;
                     cct = CollisionComponentType.Edge;
@@ -214,7 +214,7 @@ namespace Collision
             {
                 if (IsColliding)
                 {
-                    if(CollisionTime > 0)
+                    if (CollisionTime > 0)
                     {
                         debugDraw.DrawLine(worldSpaceVertices[0] + Velocity * CollisionTime, worldSpaceVertices[1] + Velocity * CollisionTime, Color.Blue);
                         debugDraw.DrawLine(worldSpaceVertices[1] + Velocity * CollisionTime, worldSpaceVertices[2] + Velocity * CollisionTime, Color.Blue);
@@ -222,6 +222,24 @@ namespace Collision
                         debugDraw.DrawLine(worldSpaceVertices[3] + Velocity * CollisionTime, worldSpaceVertices[0] + Velocity * CollisionTime, Color.Blue);
 
                         debugDraw.DrawArrow(Position, Position + Velocity * CollisionTime, Color.Red);
+
+                        var cct = GetCollisionComponent(PushVector, out int vertexIndex1, out int vertexIndex2);
+                        debugDraw.DrawPoint(worldSpaceVertices[vertexIndex1], Color.White, 10);
+                        debugDraw.DrawPoint(worldSpaceVertices[vertexIndex1] + Velocity * CollisionTime, Color.Blue, 10);
+                        if (cct == CollisionComponentType.Edge)
+                        {
+                            debugDraw.DrawPoint(worldSpaceVertices[vertexIndex2], Color.White, 10);
+                            debugDraw.DrawPoint(worldSpaceVertices[vertexIndex2] + Velocity * CollisionTime, Color.Blue, 10);
+                        }
+                    }
+                    else if(CollisionTime < 0)
+                    {
+                        debugDraw.DrawLine(worldSpaceVertices[0] + PushVector, worldSpaceVertices[1] + PushVector, Color.Yellow);
+                        debugDraw.DrawLine(worldSpaceVertices[1] + PushVector, worldSpaceVertices[2] + PushVector, Color.Yellow);
+                        debugDraw.DrawLine(worldSpaceVertices[2] + PushVector, worldSpaceVertices[3] + PushVector, Color.Yellow);
+                        debugDraw.DrawLine(worldSpaceVertices[3] + PushVector, worldSpaceVertices[0] + PushVector, Color.Yellow);
+
+                        debugDraw.DrawArrow(Position, Position + PushVector, Color.Yellow);
                     }
                 }
                 else

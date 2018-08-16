@@ -74,6 +74,19 @@ namespace Collision
             spriteBatch.End();
         }
 
+        public void DrawPoint(Vector2 position, Color color, float size, float thickness = 1.0f)
+        {
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone);
+
+            spriteBatch.Draw(texture, position + new Vector2(-size / 2, 0), null, color, 0, new Vector2(0, 0.5f), new Vector2(size, thickness), SpriteEffects.None, 0);
+            spriteBatch.Draw(texture, position + new Vector2(0, -size / 2), null, color, MathHelper.PiOver2, new Vector2(0, 0.5f), new Vector2(size, thickness), SpriteEffects.None, 0);
+            float length = 0.7071f * size / 2;
+            spriteBatch.Draw(texture, position + new Vector2(-length, -length), null, color, MathHelper.PiOver4, new Vector2(0, 0.5f), new Vector2(size, thickness), SpriteEffects.None, 0);
+            spriteBatch.Draw(texture, position + new Vector2(-length, length), null, color, -MathHelper.PiOver4, new Vector2(0, 0.5f), new Vector2(size, thickness), SpriteEffects.None, 0);
+
+            spriteBatch.End();
+        }
+
         private SpriteBatch spriteBatch;
         private Texture2D texture;
     }

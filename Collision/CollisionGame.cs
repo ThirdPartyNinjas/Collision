@@ -34,13 +34,13 @@ namespace Collision
             {
                 Dimensions = new Vector2(50, 50),
                 Position = new Vector2(640, 360),
-                Velocity = new Vector2(0, 100),
+                Velocity = new Vector2(-20, 100),
             };
             box2 = new CollidableObject()
             {
                 Dimensions = new Vector2(500, 25),
                 Position = new Vector2(640, 500),
-                Velocity = new Vector2(0, -50),
+                Velocity = new Vector2(20, -50),
             };
         }
 
@@ -48,20 +48,33 @@ namespace Collision
         {
             base.Update(gameTime);
 
-            Vector2 offset = Vector2.Zero;
+            Vector2 newPosition = Vector2.Zero;
+            Vector2 newVelocity = Vector2.Zero;
 
             var keyboardState = Keyboard.GetState();
             if (keyboardState.IsKeyDown(Keys.Left))
-                offset.X = -1;
+                newPosition.X = -1;
             else if (keyboardState.IsKeyDown(Keys.Right))
-                offset.X = 1;
+                newPosition.X = 1;
             if (keyboardState.IsKeyDown(Keys.Up))
-                offset.Y = -1;
+                newPosition.Y = -1;
             else if (keyboardState.IsKeyDown(Keys.Down))
-                offset.Y = 1;
+                newPosition.Y = 1;
 
-            box1.Position += offset;
-            box1.Rotation += (float)gameTime.ElapsedGameTime.TotalSeconds / 10.0f;
+            if (keyboardState.IsKeyDown(Keys.A))
+                newVelocity.X = -1;
+            else if (keyboardState.IsKeyDown(Keys.D))
+                newVelocity.X = 1;
+            if (keyboardState.IsKeyDown(Keys.W))
+                newVelocity.Y = -1;
+            else if (keyboardState.IsKeyDown(Keys.S))
+                newVelocity.Y = 1;
+
+            box1.Velocity += newVelocity;
+            box1.Position += newPosition;
+            box1.Rotation += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            box2.Rotation = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds) / 4.0f;
 
             box1.UpdateWorldSpaceVertices();
             box2.UpdateWorldSpaceVertices();
@@ -70,11 +83,11 @@ namespace Collision
             {
                 box1.IsColliding = true;
                 box1.CollisionTime = time;
-                box1.PushVector = axis * time;
+                box1.PushVector = axis * -time;
 
                 box2.IsColliding = true;
-                box2.CollisionTime = time;
-                box2.PushVector = Vector2.Zero;
+                box2.CollisionTime = Math.Max(time, 0);
+                box2.PushVector = axis;
             }
             else
             {
@@ -91,6 +104,5 @@ namespace Collision
             box1.Render(debugDraw);
             box2.Render(debugDraw);
         }
-
     }
 }
