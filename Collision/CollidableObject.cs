@@ -24,6 +24,8 @@ namespace Collision
         public float CollisionTime { get; set; }
         public Vector2 PushVector { get; set; }
 
+        public string Name { get; set; }
+
         public void CalculateInterval(Vector2 axis, out float min, out float max)
         {
             float a = Vector2.Dot(axis, worldSpaceVertices[0]);
@@ -172,16 +174,16 @@ namespace Collision
                 var v = worldSpaceVertices[i];
                 var temp = Vector2.Dot(direction, v);
 
-                if (temp > max)
+                if (Utility.ApproximatelyEqual(temp, max))
+                {
+                    vertex2 = i;
+                    cct = CollisionComponentType.Edge;
+                }
+                else if (temp > max)
                 {
                     max = temp;
                     vertex1 = i;
                     cct = CollisionComponentType.Vertex;
-                }
-                else if (Utility.ApproximatelyEqual(temp, max))
-                {
-                    vertex2 = i;
-                    cct = CollisionComponentType.Edge;
                 }
             }
 

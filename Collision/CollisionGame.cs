@@ -9,6 +9,7 @@ namespace Collision
     {
         DebugDraw debugDraw;
         CollidableObject box1, box2;
+        bool pauseRotation = false;
 
         public CollisionGame()
         {
@@ -35,12 +36,14 @@ namespace Collision
                 Dimensions = new Vector2(50, 50),
                 Position = new Vector2(640, 360),
                 Velocity = new Vector2(-20, 100),
+                Name = "Box1",
             };
             box2 = new CollidableObject()
             {
                 Dimensions = new Vector2(500, 25),
                 Position = new Vector2(640, 500),
                 Velocity = new Vector2(20, -50),
+                Name = "Box2",
             };
         }
 
@@ -70,11 +73,19 @@ namespace Collision
             else if (keyboardState.IsKeyDown(Keys.S))
                 newVelocity.Y = 1;
 
+            if (keyboardState.IsKeyDown(Keys.P))
+                pauseRotation = true;
+            else if (keyboardState.IsKeyDown(Keys.U))
+                pauseRotation = false;
+
             box1.Velocity += newVelocity;
             box1.Position += newPosition;
-            box1.Rotation += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            box2.Rotation = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds) / 4.0f;
+            if (!pauseRotation)
+            {
+                box1.Rotation += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                box2.Rotation = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds) / 4.0f;
+            }
 
             box1.UpdateWorldSpaceVertices();
             box2.UpdateWorldSpaceVertices();
