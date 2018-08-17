@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 namespace Collision
 {
@@ -15,10 +16,9 @@ namespace Collision
         public float Rotation { get; set; } = 0;
         public Vector2 Scale { get; set; } = Vector2.One;
 
-        public Vector2 Dimensions { get; set; }
         public Vector2 Velocity { get; set; } = Vector2.Zero;
 
-        public Vector2[] CollisionAxes { get; private set; } = new Vector2[2];
+        public List<Vector2> CollisionAxes { get; private set; } = new List<Vector2>();
 
         public bool IsColliding { get; set; } = false;
         public float CollisionTime { get; set; }
@@ -26,15 +26,30 @@ namespace Collision
 
         public string Name { get; set; }
 
+        public CollidableObject(Vector2 dimensions)
+        {
+            localSpaceVertices.Add(new Vector2(-dimensions.X / 2, -dimensions.Y / 2));
+            localSpaceVertices.Add(new Vector2(dimensions.X / 2, -dimensions.Y / 2));
+            localSpaceVertices.Add(new Vector2(dimensions.X / 2, dimensions.Y / 2));
+            localSpaceVertices.Add(new Vector2(-dimensions.X / 2, dimensions.Y / 2));
+        }
+
+        public CollidableObject(List<Vector2> vertices)
+        {
+            localSpaceVertices.AddRange(vertices);
+        }
+
         public void CalculateInterval(Vector2 axis, out float min, out float max)
         {
-            float a = Vector2.Dot(axis, worldSpaceVertices[0]);
-            float b = Vector2.Dot(axis, worldSpaceVertices[1]);
-            float c = Vector2.Dot(axis, worldSpaceVertices[2]);
-            float d = Vector2.Dot(axis, worldSpaceVertices[3]);
+            min = float.MaxValue;
+            max = float.MinValue;
 
-            min = Math.Min(Math.Min(Math.Min(a, b), c), d);
-            max = Math.Max(Math.Max(Math.Max(a, b), c), d);
+            foreach(var v in worldSpaceVertices)
+            {
+                var p = Vector2.Dot(axis, v);
+                min = Math.Min(min, p);
+                max = Math.Max(max, p);
+            }
         }
 
         private static bool FindIntervalIntersection(CollidableObject object1, CollidableObject object2, Vector2 velocity, Vector2 axis, out float time)
@@ -106,19 +121,40 @@ namespace Collision
             if (!FindIntervalIntersection(object1, object2, velocity, velocityNormal, out tempTime))
                 return false;
 
-            Vector2[] collisionAxes = new Vector2[4];
-            collisionAxes[0] = object1.CollisionAxes[0];
-            collisionAxes[1] = object1.CollisionAxes[1];
-            collisionAxes[2] = object2.CollisionAxes[0];
-            collisionAxes[3] = object2.CollisionAxes[1];
-
             float maxNegativeTime = float.MinValue;
             float maxPositiveTime = float.MinValue;
             Vector2 maxNegativeAxis = Vector2.Zero;
             Vector2 maxPositiveAxis = Vector2.Zero;
             bool futureCollision = false;
 
-            foreach (var testAxis in collisionAxes)
+            foreach (var testAxis in object1.CollisionAxes)
+            {
+                if (!FindIntervalIntersection(object1, object2, velocity, testAxis, out tempTime))
+                {
+                    return false;
+                }
+
+                if (tempTime >= 0)
+                {
+                    if (tempTime > maxPositiveTime)
+                    {
+                        maxPositiveTime = tempTime;
+                        maxPositiveAxis = testAxis;
+                    }
+
+                    futureCollision = true;
+                }
+                else
+                {
+                    if (tempTime > maxNegativeTime)
+                    {
+                        maxNegativeTime = tempTime;
+                        maxNegativeAxis = testAxis;
+                    }
+                }
+            }
+
+            foreach (var testAxis in object2.CollisionAxes)
             {
                 if (!FindIntervalIntersection(object1, object2, velocity, testAxis, out tempTime))
                 {
@@ -192,25 +228,27 @@ namespace Collision
 
         public void UpdateWorldSpaceVertices()
         {
-            worldSpaceVertices[0] = TranformPoint(new Vector2(-Dimensions.X / 2, -Dimensions.Y / 2), Position, Rotation, Scale);
-            worldSpaceVertices[1] = TranformPoint(new Vector2(Dimensions.X / 2, -Dimensions.Y / 2), Position, Rotation, Scale);
-            worldSpaceVertices[2] = TranformPoint(new Vector2(Dimensions.X / 2, Dimensions.Y / 2), Position, Rotation, Scale);
-            worldSpaceVertices[3] = TranformPoint(new Vector2(-Dimensions.X / 2, Dimensions.Y / 2), Position, Rotation, Scale);
+            worldSpaceVertices.Clear();
+            foreach(var v in localSpaceVertices)
+            {
+                worldSpaceVertices.Add(TranformPoint(v, Position, Rotation, Scale));
+            }
 
-            var temp = worldSpaceVertices[1] - worldSpaceVertices[0];
-            CollisionAxes[0] = new Vector2(temp.Y, -temp.X);
-            CollisionAxes[0].Normalize();
-            temp = worldSpaceVertices[2] - worldSpaceVertices[1];
-            CollisionAxes[1] = new Vector2(temp.Y, -temp.X);
-            CollisionAxes[1].Normalize();
+            CollisionAxes.Clear();
+            var lastVertex = worldSpaceVertices[worldSpaceVertices.Count - 1];
+            foreach(var v in worldSpaceVertices)
+            {
+                var temp = v - lastVertex;
+                temp = new Vector2(temp.Y, -temp.X);
+                temp.Normalize();
+                CollisionAxes.Add(temp);
+                lastVertex = v;
+            }
         }
 
         public void Render(DebugDraw debugDraw)
         {
-            debugDraw.DrawLine(worldSpaceVertices[0], worldSpaceVertices[1], Color.White);
-            debugDraw.DrawLine(worldSpaceVertices[1], worldSpaceVertices[2], Color.White);
-            debugDraw.DrawLine(worldSpaceVertices[2], worldSpaceVertices[3], Color.White);
-            debugDraw.DrawLine(worldSpaceVertices[3], worldSpaceVertices[0], Color.White);
+            debugDraw.DrawShape(worldSpaceVertices, Color.White);
 
             if (Velocity.Length() > 0.01f)
             {
@@ -218,10 +256,7 @@ namespace Collision
                 {
                     if (CollisionTime > 0)
                     {
-                        debugDraw.DrawLine(worldSpaceVertices[0] + Velocity * CollisionTime, worldSpaceVertices[1] + Velocity * CollisionTime, Color.Blue);
-                        debugDraw.DrawLine(worldSpaceVertices[1] + Velocity * CollisionTime, worldSpaceVertices[2] + Velocity * CollisionTime, Color.Blue);
-                        debugDraw.DrawLine(worldSpaceVertices[2] + Velocity * CollisionTime, worldSpaceVertices[3] + Velocity * CollisionTime, Color.Blue);
-                        debugDraw.DrawLine(worldSpaceVertices[3] + Velocity * CollisionTime, worldSpaceVertices[0] + Velocity * CollisionTime, Color.Blue);
+                        debugDraw.DrawShape(worldSpaceVertices, Velocity * CollisionTime, Color.Blue);
 
                         debugDraw.DrawArrow(Position, Position + Velocity * CollisionTime, Color.Red);
 
@@ -236,20 +271,14 @@ namespace Collision
                     }
                     else if(CollisionTime < 0)
                     {
-                        debugDraw.DrawLine(worldSpaceVertices[0] + PushVector, worldSpaceVertices[1] + PushVector, Color.Yellow);
-                        debugDraw.DrawLine(worldSpaceVertices[1] + PushVector, worldSpaceVertices[2] + PushVector, Color.Yellow);
-                        debugDraw.DrawLine(worldSpaceVertices[2] + PushVector, worldSpaceVertices[3] + PushVector, Color.Yellow);
-                        debugDraw.DrawLine(worldSpaceVertices[3] + PushVector, worldSpaceVertices[0] + PushVector, Color.Yellow);
+                        debugDraw.DrawShape(worldSpaceVertices, PushVector, Color.Yellow);
 
                         debugDraw.DrawArrow(Position, Position + PushVector, Color.Yellow);
                     }
                 }
                 else
                 {
-                    debugDraw.DrawLine(worldSpaceVertices[0] + Velocity, worldSpaceVertices[1] + Velocity, Color.Blue);
-                    debugDraw.DrawLine(worldSpaceVertices[1] + Velocity, worldSpaceVertices[2] + Velocity, Color.Blue);
-                    debugDraw.DrawLine(worldSpaceVertices[2] + Velocity, worldSpaceVertices[3] + Velocity, Color.Blue);
-                    debugDraw.DrawLine(worldSpaceVertices[3] + Velocity, worldSpaceVertices[0] + Velocity, Color.Blue);
+                    debugDraw.DrawShape(worldSpaceVertices, Velocity, Color.Blue);
 
                     debugDraw.DrawArrow(Position, Position + Velocity, Color.Green);
                 }
@@ -269,6 +298,7 @@ namespace Collision
             return result;
         }
 
-        Vector2[] worldSpaceVertices = new Vector2[4];
+        List<Vector2> localSpaceVertices = new List<Vector2>();
+        List<Vector2> worldSpaceVertices = new List<Vector2>();
     }
 }

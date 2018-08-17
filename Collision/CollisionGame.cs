@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace Collision
 {
@@ -31,19 +32,29 @@ namespace Collision
         protected override void LoadContent()
         {
             debugDraw = new DebugDraw(GraphicsDevice);
-            box1 = new CollidableObject()
+            box1 = new CollidableObject(new Vector2(50, 50))
             {
-                Dimensions = new Vector2(50, 50),
-                Position = new Vector2(640, 360),
-                Velocity = new Vector2(-20, 100),
-                Name = "Box1",
+                Position = new Vector2(620, 250),
+                Velocity = new Vector2(20, 100),
+                Name = "Box",
             };
-            box2 = new CollidableObject()
+
+            int vertexCount = 10;
+            float radius = 150;
+            List<Vector2> vertices = new List<Vector2>();
+            for(int i=0; i<vertexCount; i++)
             {
-                Dimensions = new Vector2(500, 25),
+                float radians = i / (float)vertexCount * MathHelper.TwoPi;
+                var v = new Vector2(radius * (float)Math.Cos(radians), radius * (float)Math.Sin(radians));
+                vertices.Add(v);
+            }
+
+            //box2 = new CollidableObject(new Vector2(500, 25))
+            box2 = new CollidableObject(vertices)
+            {
                 Position = new Vector2(640, 500),
-                Velocity = new Vector2(20, -50),
-                Name = "Box2",
+                //Velocity = new Vector2(20, -50),
+                Name = "Object",
             };
         }
 
@@ -84,7 +95,7 @@ namespace Collision
             if (!pauseRotation)
             {
                 box1.Rotation += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                box2.Rotation = (float)Math.Sin(gameTime.TotalGameTime.TotalSeconds) / 4.0f;
+                box2.Rotation -= (float)gameTime.ElapsedGameTime.TotalSeconds / 2;
             }
 
             box1.UpdateWorldSpaceVertices();

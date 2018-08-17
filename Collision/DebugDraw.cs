@@ -50,6 +50,72 @@ namespace Collision
             spriteBatch.End();
         }
 
+        public void DrawLineList(IList<Vector2> points, Vector2 offset, Color color, float thickness = 1.0f)
+        {
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone);
+
+            for (int i = 0; i < points.Count - 1; i++)
+            {
+                Vector2 start = points[i] + offset;
+                Vector2 end = points[i + 1] + offset;
+
+                Vector2 difference = end - start;
+                float length = difference.Length();
+                difference.Normalize();
+
+                float angle = (float)Math.Atan2(difference.Y, difference.X);
+
+                spriteBatch.Draw(texture, start, null, color, angle, new Vector2(0, 0.5f), new Vector2(length, thickness), SpriteEffects.None, 0);
+            }
+            spriteBatch.End();
+        }
+
+        public void DrawShape(IList<Vector2> points, Color color, float thickness = 1.0f)
+        {
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone);
+
+            Vector2 lastVertex = points[points.Count - 1];
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector2 start = lastVertex;
+                Vector2 end = points[i];
+                lastVertex = points[i];
+
+                Vector2 difference = end - start;
+                float length = difference.Length();
+                difference.Normalize();
+
+                float angle = (float)Math.Atan2(difference.Y, difference.X);
+
+                spriteBatch.Draw(texture, start, null, color, angle, new Vector2(0, 0.5f), new Vector2(length, thickness), SpriteEffects.None, 0);
+            }
+            spriteBatch.End();
+        }
+
+        public void DrawShape(IList<Vector2> points, Vector2 offset, Color color, float thickness = 1.0f)
+        {
+            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, RasterizerState.CullNone);
+
+            Vector2 lastVertex = points[points.Count - 1];
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                Vector2 start = lastVertex + offset;
+                Vector2 end = points[i] + offset;
+                lastVertex = points[i];
+
+                Vector2 difference = end - start;
+                float length = difference.Length();
+                difference.Normalize();
+
+                float angle = (float)Math.Atan2(difference.Y, difference.X);
+
+                spriteBatch.Draw(texture, start, null, color, angle, new Vector2(0, 0.5f), new Vector2(length, thickness), SpriteEffects.None, 0);
+            }
+            spriteBatch.End();
+        }
+
         public void DrawArrow(Vector2 start, Vector2 end, Color color, float thickness = 1.0f, float arrowHeadLength = 15.0f, float arrowHeadAngle = (25.0f * MathHelper.Pi / 180.0f))
         {
             Vector2 difference = end - start;
