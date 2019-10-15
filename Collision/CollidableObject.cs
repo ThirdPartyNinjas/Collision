@@ -205,7 +205,7 @@ namespace Collision
             float max = float.MinValue;
             CollisionComponentType cct = CollisionComponentType.Vertex;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < worldSpaceVertices.Count; i++)
             {
                 var v = worldSpaceVertices[i];
                 var temp = Vector2.Dot(direction, v);

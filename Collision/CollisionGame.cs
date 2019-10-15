@@ -35,7 +35,7 @@ namespace Collision
             box1 = new CollidableObject(new Vector2(50, 50))
             {
                 Position = new Vector2(620, 250),
-                Velocity = new Vector2(20, 100),
+                Velocity = new Vector2(20, 150),
                 Name = "Box",
             };
 
@@ -55,6 +55,7 @@ namespace Collision
                 Position = new Vector2(640, 500),
                 //Velocity = new Vector2(20, -50),
                 Name = "Object",
+                Velocity = new Vector2(0, -10),
             };
         }
 
